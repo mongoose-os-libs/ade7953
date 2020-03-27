@@ -1,0 +1,21 @@
+author: Pim van Pelt <pim@ipng.nl>
+type: lib
+description: Mongoose OS library implementing an I2C driver for ADE7953
+version: 1.0
+
+sources:
+  - src
+
+includes:
+  - include
+
+libs:
+  - origin: https://github.com/mongoose-os-libs/i2c
+
+tags:
+  - c
+  - i2c
+  - hw
+  - docs:drivers:ADE7953 I2C
+
+manifest_version: 2017-09-29
