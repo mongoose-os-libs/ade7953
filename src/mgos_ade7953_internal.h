@@ -20,6 +20,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "mgos.h"
 #include "mgos_i2c.h"
 
 // Registers
@@ -43,8 +44,8 @@ struct mgos_ade7953 {
   struct mgos_i2c *i2c;
   uint8_t i2caddr;
 
-  uint32_t voltage_rms;
-  uint32_t current_rms[2];
+  float voltage_scale;
+  float current_scale[2];
 };
 
 bool mgos_ade7953_i2c_init(void);

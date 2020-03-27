@@ -25,11 +25,16 @@ extern "C" {
 
 #include "mgos_i2c.h"
 
+#define MGOS_ADE7953_DEFAULT_I2CADDR (0x38)
+
 struct mgos_ade7953;
 
 struct mgos_ade7953 *mgos_ade7953_create(struct mgos_i2c *i2c, uint8_t i2caddr);
 
 bool mgos_ade7953_get_voltage(struct mgos_ade7953 *dev, float *volts);
+bool mgos_ade7953_set_scale_voltage(struct mgos_ade7953 *dev, float scale);
+bool mgos_ade7953_set_scale_current(struct mgos_ade7953 *dev, int channel, float scale);
+bool mgos_ade7953_get_frequency(struct mgos_ade7953 *dev, float *hertz);
 bool mgos_ade7953_get_current(struct mgos_ade7953 *dev, int channel, float *amperes);
 
 bool mgos_ade7953_destroy(struct mgos_ade7953 **dev);
