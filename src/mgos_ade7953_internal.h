@@ -39,6 +39,7 @@
 #define MGOS_ADE7953_REG_PERIOD 0x10E
 #define MGOS_ADE7953_REG_RESERVED 0x120
 #define MGOS_ADE7953_REG_VERSION 0x702
+#define MGOS_ADE7953_REG_EX_REF 0x800
 
 struct mgos_ade7953 {
   struct mgos_i2c *i2c;
