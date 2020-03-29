@@ -34,7 +34,7 @@ static void ade7953_cb (void *user_data) {
 }
 
 enum mgos_app_init_result mgos_app_init(void) {
-  struct mgos_ade7953 *ade = NULL;
+  struct mgos_ade7953 *ade;
 
   // These constants are specific to the specific application circuit.
   const struct mgos_ade7953_config ade_cfg = {
@@ -45,8 +45,6 @@ enum mgos_app_init_result mgos_app_init(void) {
       .apower_scale = {(1 / 164.0), (1 / 164.0)},
       .aenergy_scale = {(1 / 25240.0), (1 / 25240.0)},
   };
-  struct mgos_ade7953 *ade =
-      mgos_ade7953_create(mgos_i2c_get_global(), &ade_cfg);
   if (!(ade = mgos_ade7953_create(mgos_i2c_get_global(), &ade_cfg))) {
     return false;
   }
