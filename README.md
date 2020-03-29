@@ -18,22 +18,36 @@ as well as instantaneous RMS voltage and current.
 
 static void ade7953_cb (void *user_data) {
   struct mgos_ade7953 *ade = (struct mgos_ade7953 *) user_data;
-  float f, v, ia, ib;
+  float f = 0, v = 0, ia = 0, ib = 0, aea = 0, aeb = 0, apa = 0, apb = 0;
   if (!ade) return;
 
   mgos_ade7953_get_frequency(ade, &f);
   mgos_ade7953_get_voltage(ade, &v);
   mgos_ade7953_get_current(ade, 0, &ia);
   mgos_ade7953_get_current(ade, 1, &ib);
-  LOG(LL_INFO, ("freq=%.2fHz V=%.2fV IA=%.3fA IB=%.3fA",
-                f, v, ia, ib));
+  mgos_ade7953_get_apower(ade, 0, &apa);
+  mgos_ade7953_get_apower(ade, 1, &apb);
+  mgos_ade7953_get_aenergy(ade, 0, false /* reset */, &aea);
+  mgos_ade7953_get_aenergy(ade, 1, false /* reset */, &aeb);
+  LOG(LL_INFO, ("V=%.3fV f=%.2fHz | IA=%.3fA VIA=%.3f APA=%.3f AEA=%.3f | IB=%.3fA VIB=%.3f APB=%.3f AEB=%.3f",
+                v, f, ia, (v * ia), apa, aea, ib, (v * ib), apb, aeb));
 }
 
 enum mgos_app_init_result mgos_app_init(void) {
   struct mgos_ade7953 *ade = NULL;
 
-  if (!(ade = mgos_ade7953_create(mgos_i2c_get_global(),
-                                  MGOS_ADE7953_DEFAULT_I2CADDR))) {
+  // These constants are specific to the specific application circuit.
+  const struct mgos_ade7953_config ade_cfg = {
+      .voltage_scale = .0000382602,
+      .voltage_offset = -0.068,
+      .current_scale = {0.00000949523, 0.00000949523},
+      .current_offset = {-0.017, -0.017},
+      .apower_scale = {(1 / 164.0), (1 / 164.0)},
+      .aenergy_scale = {(1 / 25240.0), (1 / 25240.0)},
+  };
+  struct mgos_ade7953 *ade =
+      mgos_ade7953_create(mgos_i2c_get_global(), &ade_cfg);
+  if (!(ade = mgos_ade7953_create(mgos_i2c_get_global(), &ade_cfg))) {
     return false;
   }
 
