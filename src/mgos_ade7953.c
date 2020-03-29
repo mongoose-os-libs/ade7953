@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+#include "mgos_ade7953.h"
+
+#include "mgos_i2c.h"
+
 #include "mgos_ade7953_internal.h"
 
 static int mgos_ade7953_regsize(uint16_t reg) {
@@ -26,7 +30,7 @@ static int mgos_ade7953_regsize(uint16_t reg) {
   return size;
 }
 
-static bool mgos_ade7953_write(struct mgos_ade7953 *dev, uint16_t reg, int32_t val) {
+bool mgos_ade7953_write_reg(struct mgos_ade7953 *dev, uint16_t reg, int32_t val) {
   uint8_t data[6];
   int size = mgos_ade7953_regsize(reg);
   int i;
@@ -40,7 +44,7 @@ static bool mgos_ade7953_write(struct mgos_ade7953 *dev, uint16_t reg, int32_t v
     data[i++] = (val >> (8 * size)) & 0xff;
   }
 
-  if (!mgos_i2c_write(dev->i2c, dev->i2caddr, data, i, true)) {
+  if (!mgos_i2c_write(dev->i2c, MGOS_ADE7953_I2C_ADDR, data, i, true)) {
     LOG(LL_ERROR, ("ADE7953 I2C write error (%d bytes)", i));
     return false;
   }
@@ -48,18 +52,18 @@ static bool mgos_ade7953_write(struct mgos_ade7953 *dev, uint16_t reg, int32_t v
   return true;
 }
 
-static bool mgos_ade7953_read(struct mgos_ade7953 *dev, uint16_t reg, bool is_signed, int32_t *val) {
+bool mgos_ade7953_read_reg(struct mgos_ade7953 *dev, uint16_t reg, bool is_signed, int32_t *val) {
   uint8_t data[4];
   int size = mgos_ade7953_regsize(reg);
   if (!dev || size > 4 || size < 0) return false;
 
   data[0] = (reg >> 8) & 0xff;
   data[1] = reg & 0xff;
-  if (!mgos_i2c_write(dev->i2c, dev->i2caddr, data, 2, true)) {
+  if (!mgos_i2c_write(dev->i2c, MGOS_ADE7953_I2C_ADDR, data, 2, true)) {
     LOG(LL_ERROR, ("ADE7953 I2C write error (2 bytes)"));
     return false;
   }
-  if (!mgos_i2c_read(dev->i2c, dev->i2caddr, data, size, true)) {
+  if (!mgos_i2c_read(dev->i2c, MGOS_ADE7953_I2C_ADDR, data, size, true)) {
     LOG(LL_ERROR, ("ADE7953 I2C read8 error (%d bytes)", size));
     return false;
   }
@@ -81,31 +85,46 @@ static bool mgos_ade7953_read(struct mgos_ade7953 *dev, uint16_t reg, bool is_si
   return true;
 }
 
-struct mgos_ade7953 *mgos_ade7953_create(struct mgos_i2c *i2c, uint8_t i2caddr) {
+struct mgos_ade7953 *mgos_ade7953_create(struct mgos_i2c *i2c, const struct mgos_ade7953_config *cfg) {
   struct mgos_ade7953 *dev;
   int32_t version;
 
   if (!i2c) return NULL;
   if (!(dev = calloc(1, sizeof(*dev)))) return NULL;
   dev->i2c = i2c;
-  dev->i2caddr = i2caddr;
 
-  // Empirical observation, use API calls to override.
-  dev->voltage_scale = (1. / 26000);
-  dev->current_scale[0] = (1. / 100000);
-  dev->current_scale[1] = (1. / 100000);
+  dev->voltage_scale = cfg->voltage_scale;
+  for (int i = 0; i < 1; i++) {
+    dev->current_scale[i] = cfg->current_scale[i];
+    dev->apower_scale[i] = cfg->apower_scale[i];
+    dev->aenergy_scale[i] = cfg->aenergy_scale[i];
+  }
 
-  if (mgos_ade7953_read(dev, MGOS_ADE7953_REG_VERSION, false, &version)) {
+  if (mgos_ade7953_read_reg(dev, MGOS_ADE7953_REG_VERSION, false, &version)) {
     LOG(LL_INFO, ("ADE7953 silicon version: 0x%02x (%d)", version, version));
 
     // Lock comms interface, enable high pass filter
-    mgos_ade7953_write(dev, MGOS_ADE7953_REG_CONFIG, 0x04);
+    mgos_ade7953_write_reg(dev, MGOS_ADE7953_REG_CONFIG, 0x04);
 
     // Unlock unnamed (!) register 0x120 (see datasheet, page 18)
-    mgos_ade7953_write(dev, MGOS_ADE7953_REG_UNNAMED, 0xAD);
+    mgos_ade7953_write_reg(dev, MGOS_ADE7953_REG_UNNAMED, 0xAD);
 
     // Set "optimal setting" (see datasheet, page 18)
-    mgos_ade7953_write(dev, MGOS_ADE7953_REG_RESERVED, 0x30);
+    mgos_ade7953_write_reg(dev, MGOS_ADE7953_REG_RESERVED, 0x30);
+
+    // Program measurement offsets.
+    if (cfg->voltage_offset != 0) {
+      mgos_ade7953_write_reg(dev, MGOS_ADE7953_REG_VRMSOS, (int32_t)(cfg->voltage_offset / cfg->voltage_scale));
+    }
+    if (cfg->current_offset[0] != 0) {
+      mgos_ade7953_write_reg(dev, MGOS_ADE7953_REG_AIRMSOS, (int32_t)(cfg->current_offset[0] / cfg->current_scale[0]));
+    }
+    if (cfg->current_offset[1] != 0) {
+      mgos_ade7953_write_reg(dev, MGOS_ADE7953_REG_BIRMSOS, (int32_t)(cfg->current_offset[1] / cfg->current_scale[1]));
+    }
+
+    mgos_ade7953_write_reg(dev, MGOS_ADE7953_REG_LCYCMODE, 0x40);
+
   } else {
     LOG(LL_ERROR, ("Failed to communicate with ADE7953"));
   }
@@ -116,7 +135,7 @@ struct mgos_ade7953 *mgos_ade7953_create(struct mgos_i2c *i2c, uint8_t i2caddr) 
 bool mgos_ade7953_get_frequency(struct mgos_ade7953 *dev, float *hertz) {
   int32_t val;
   if (!dev || !hertz) return false;
-  if (!mgos_ade7953_read(dev, MGOS_ADE7953_REG_PERIOD, false, &val)) {
+  if (!mgos_ade7953_read_reg(dev, MGOS_ADE7953_REG_PERIOD, false, &val)) {
     return false;
   }
   *hertz = 223750.0f / ((float) val + 1);
@@ -126,7 +145,7 @@ bool mgos_ade7953_get_frequency(struct mgos_ade7953 *dev, float *hertz) {
 bool mgos_ade7953_get_voltage(struct mgos_ade7953 *dev, float *volts) {
   int32_t val;
   if (!dev || !volts) return false;
-  if (!mgos_ade7953_read(dev, MGOS_ADE7953_REG_V, false, &val)) {
+  if (!mgos_ade7953_read_reg(dev, MGOS_ADE7953_REG_V, false, &val)) {
     return false;
   }
   *volts = val * dev->voltage_scale;
@@ -143,26 +162,60 @@ bool mgos_ade7953_get_current(struct mgos_ade7953 *dev, int channel, float *ampe
     reg = MGOS_ADE7953_REG_IB;
   else
     return false;
-  if (!mgos_ade7953_read(dev, reg, true, &val)) {
+  if (!mgos_ade7953_read_reg(dev, reg, true, &val)) {
     return false;
   }
   *amperes = val * dev->current_scale[channel];
   return true;
 }
 
-bool mgos_ade7953_set_scale_voltage(struct mgos_ade7953 *dev, float scale) {
-  if (!dev) return false;
-  dev->voltage_scale = scale;
+bool mgos_ade7953_get_apower(struct mgos_ade7953 *dev, int channel, float *watts) {
+  uint16_t reg;
+  int32_t val;
+  if (!dev || !watts) return false;
+  if (channel == 0)
+    reg = MGOS_ADE7953_REG_AWATT;
+  else if (channel == 1)
+    reg = MGOS_ADE7953_REG_BWATT;
+  else
+    return false;
+  if (!mgos_ade7953_read_reg(dev, reg, true, &val)) {
+    return false;
+  }
+  *watts = val * dev->apower_scale[channel];
   return true;
 }
 
-bool mgos_ade7953_set_scale_current(struct mgos_ade7953 *dev, int channel, float scale) {
-  if (!dev) return false;
-  if (channel == 0 || channel == 1) {
-    dev->current_scale[channel] = scale;
-    return true;
+bool mgos_ade7953_get_aenergy(struct mgos_ade7953 *dev, int channel, bool reset, float *wh) {
+  uint16_t reg;
+  int32_t val;
+  if (!dev || !wh) return false;
+  if (channel == 0)
+    reg = MGOS_ADE7953_REG_ANENERGYA;
+  else if (channel == 1)
+    reg = MGOS_ADE7953_REG_ANENERGYB;
+  else
+    return false;
+  // Ensure LCYCMODE[6] (RSTREAD) is set correctly.
+  if (!mgos_ade7953_read_reg(dev, MGOS_ADE7953_REG_LCYCMODE, false, &val)) {
+    return false;
   }
-  return false;
+  if (((bool) (val & (1 << 6))) != reset) {
+    if (reset) {
+      val |= (1 << 6);
+    } else {
+      val &= ~(1 << 6);
+    }
+    if (!mgos_ade7953_write_reg(dev, MGOS_ADE7953_REG_LCYCMODE, val)) {
+      return false;
+    }
+  }
+
+  if (!mgos_ade7953_read_reg(dev, reg, true, &val)) {
+    return false;
+  }
+  *wh = val * dev->aenergy_scale[channel];
+  return true;
 }
 
 bool mgos_ade7953_destroy(struct mgos_ade7953 **dev) {
