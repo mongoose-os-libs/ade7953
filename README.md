@@ -1,4 +1,4 @@
-# I2C driver for ADE7953
+# Mongoose OS driver for ADE7953
 
 This is a driver for Analog Devices [ADE7953](docs/ADE7953.pdf).
 

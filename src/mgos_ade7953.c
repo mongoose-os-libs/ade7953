@@ -225,6 +225,6 @@ bool mgos_ade7953_destroy(struct mgos_ade7953 **dev) {
   return true;
 }
 
-bool mgos_ade7953_i2c_init(void) {
+bool mgos_ade7953_init(void) {
   return true;
 }
