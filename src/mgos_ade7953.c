@@ -94,7 +94,7 @@ struct mgos_ade7953 *mgos_ade7953_create(struct mgos_i2c *i2c, const struct mgos
   dev->i2c = i2c;
 
   dev->voltage_scale = cfg->voltage_scale;
-  for (int i = 0; i < 1; i++) {
+  for (int i = 0; i < 2; i++) {
     dev->current_scale[i] = cfg->current_scale[i];
     dev->apower_scale[i] = cfg->apower_scale[i];
     dev->aenergy_scale[i] = cfg->aenergy_scale[i];
