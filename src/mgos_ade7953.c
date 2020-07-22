@@ -101,7 +101,7 @@ struct mgos_ade7953 *mgos_ade7953_create(struct mgos_i2c *i2c, const struct mgos
   }
 
   if (mgos_ade7953_read_reg(dev, MGOS_ADE7953_REG_VERSION, false, &version)) {
-    LOG(LL_INFO, ("ADE7953 silicon version: 0x%02x (%d)", version, version));
+    LOG(LL_INFO, ("ADE7953 silicon version: 0x%02lx (%ld)", version, version));
 
     // Lock comms interface, enable high pass filter
     mgos_ade7953_write_reg(dev, MGOS_ADE7953_REG_CONFIG, 0x04);
