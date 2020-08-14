@@ -2,6 +2,17 @@
 
 This is a driver for Analog Devices [ADE7953](docs/ADE7953.pdf).
 
+## Bus selection
+
+Communication over I2C and SPI is supported, with I2C enabled by default. Bus
+support can be selected/deselected using defines:
+
+```
+cdefs:
+  MGOS_ADE7953_ENABLE_SPI: 1
+  MGOS_ADE7953_ENABLE_I2C: 0
+```
+
 ## Sensor details
 
 The ADE7953 is a high accuracy electrical energy measurement

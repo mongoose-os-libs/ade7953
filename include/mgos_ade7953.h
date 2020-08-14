@@ -23,7 +23,6 @@ extern "C" {
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "mgos_i2c.h"
 
 struct mgos_ade7953;
 
@@ -47,9 +46,18 @@ struct mgos_ade7953_config {
   float aenergy_scale[2];
 };
 
+#if MGOS_ADE7953_ENABLE_I2C
 // Create an instance of the driver at the given I2C bus and address.
 // Returns a pointer to the object upon success, NULL otherwise.
-struct mgos_ade7953 *mgos_ade7953_create(struct mgos_i2c *i2c, const struct mgos_ade7953_config *cfg);
+#include "mgos_i2c.h"
+struct mgos_ade7953 *mgos_ade7953_create_i2c(struct mgos_i2c *i2c, const struct mgos_ade7953_config *cfg);
+#define mgos_ade7953_create mgos_ade7953_create_i2c
+#endif
+
+#if MGOS_ADE7953_ENABLE_SPI
+#include "mgos_spi.h"
+struct mgos_ade7953 *mgos_ade7953_create_spi(struct mgos_spi *spi, int cs, const struct mgos_ade7953_config *cfg);
+#endif
 
 // Write the detected voltage in Volts RMS in the *volts pointer.
 // Returns true on success, false otherwise.
