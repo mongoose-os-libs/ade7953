@@ -4,13 +4,29 @@ description: Mongoose OS library implementing an I2C driver for ADE7953
 version: 1.0
 
 sources:
-  - src
+  - src/mgos_ade7953.c
 
 includes:
   - include
 
-libs:
-  - origin: https://github.com/mongoose-os-libs/i2c
+conds:
+  - when: cdefs.MGOS_ADE7953_ENABLE_SPI == "1"
+    apply:
+      sources:
+        - src/mgos_ade7953_spi.c
+      libs:
+        - location: https://github.com/mongoose-os-libs/spi
+
+  - when: cdefs.MGOS_ADE7953_ENABLE_I2C == "1"
+    apply:
+      sources:
+        - src/mgos_ade7953_i2c.c
+      libs:
+        - location: https://github.com/mongoose-os-libs/i2c
+
+cdefs:
+  MGOS_ADE7953_ENABLE_SPI: 0
+  MGOS_ADE7953_ENABLE_I2C: 1
 
 tags:
   - c

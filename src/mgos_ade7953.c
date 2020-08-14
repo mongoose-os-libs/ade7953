@@ -20,9 +20,9 @@
 
 #include "mgos_ade7953_internal.h"
 
-static int mgos_ade7953_regsize(uint16_t reg) {
+int mgos_ade7953_regsize(uint16_t reg) {
   int size = 1;
-  if (reg != MGOS_ADE7953_REG_VERSION && MGOS_ADE7953_REG_EX_REF) {
+  if (reg != MGOS_ADE7953_REG_VERSION && reg != MGOS_ADE7953_REG_EX_REF) {
     if (reg >= 0x300) size++;
     if (reg >= 0x200) size++;
     if (reg >= 0x100) size++;
@@ -31,43 +31,40 @@ static int mgos_ade7953_regsize(uint16_t reg) {
 }
 
 bool mgos_ade7953_write_reg(struct mgos_ade7953 *dev, uint16_t reg, int32_t val) {
-  uint8_t data[6];
   int size = mgos_ade7953_regsize(reg);
-  int i;
-
   if (!dev || size > 4 || size < 0) return false;
-  data[0] = (reg >> 8) & 0xff;
-  data[1] = reg & 0xff;
 
-  i = 2;
-  while (size--) {
-    data[i++] = (val >> (8 * size)) & 0xff;
-  }
-
-  if (!mgos_i2c_write(dev->i2c, MGOS_ADE7953_I2C_ADDR, data, i, true)) {
-    LOG(LL_ERROR, ("ADE7953 I2C write error (%d bytes)", i));
+#if MGOS_ADE7953_ENABLE_I2C
+  if (dev->i2c) return mgos_ade7953_write_reg_i2c(dev, reg, size, val);
+#endif
+#if MGOS_ADE7953_ENABLE_SPI
+  if (dev->spi) return mgos_ade7953_write_reg_spi(dev, reg, size, val);
+#endif
     return false;
-  }
-  mgos_usleep(5);
-  return true;
 }
 
 bool mgos_ade7953_read_reg(struct mgos_ade7953 *dev, uint16_t reg, bool is_signed, int32_t *val) {
+  int32_t v = 0;
   uint8_t data[4];
   int size = mgos_ade7953_regsize(reg);
+
   if (!dev || size > 4 || size < 0) return false;
 
-  data[0] = (reg >> 8) & 0xff;
-  data[1] = reg & 0xff;
-  if (!mgos_i2c_write(dev->i2c, MGOS_ADE7953_I2C_ADDR, data, 2, true)) {
-    LOG(LL_ERROR, ("ADE7953 I2C write error (2 bytes)"));
+  do {
+#if MGOS_ADE7953_ENABLE_I2C
+    if (dev->i2c) {
+      if (mgos_ade7953_read_reg_i2c(dev, reg, size, &data[0])) break;
+      return false;
+#endif
+#if MGOS_ADE7953_ENABLE_SPI
+    if (dev->spi) {
+      if (mgos_ade7953_read_reg_spi(dev, reg, size, &data[0])) break;
+      return false;
+    }
+#endif
     return false;
-  }
-  if (!mgos_i2c_read(dev->i2c, MGOS_ADE7953_I2C_ADDR, data, size, true)) {
-    LOG(LL_ERROR, ("ADE7953 I2C read8 error (%d bytes)", size));
-    return false;
-  }
-  uint32_t v = 0;
+  } while (false);
+
   for (int i = 0; i < size; i++) {
     v = (v << 8) | data[i];
   }
@@ -82,16 +79,12 @@ bool mgos_ade7953_read_reg(struct mgos_ade7953 *dev, uint16_t reg, bool is_signe
     }
   }
   *val = (int32_t) v;
+
   return true;
 }
 
-struct mgos_ade7953 *mgos_ade7953_create(struct mgos_i2c *i2c, const struct mgos_ade7953_config *cfg) {
-  struct mgos_ade7953 *dev;
+bool mgos_ade7953_create_common(struct mgos_ade7953 *dev, const struct mgos_ade7953_config *cfg) {
   int32_t version;
-
-  if (!i2c) return NULL;
-  if (!(dev = calloc(1, sizeof(*dev)))) return NULL;
-  dev->i2c = i2c;
 
   dev->voltage_scale = cfg->voltage_scale;
   for (int i = 0; i < 2; i++) {
@@ -127,9 +120,9 @@ struct mgos_ade7953 *mgos_ade7953_create(struct mgos_i2c *i2c, const struct mgos
 
   } else {
     LOG(LL_ERROR, ("Failed to communicate with ADE7953"));
+    return false;
   }
-
-  return dev;
+  return true;
 }
 
 bool mgos_ade7953_get_frequency(struct mgos_ade7953 *dev, float *hertz) {

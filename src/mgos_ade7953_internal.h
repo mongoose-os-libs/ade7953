@@ -21,7 +21,7 @@
 #include <stdint.h>
 
 #include "mgos.h"
-#include "mgos_i2c.h"
+#include "mgos_ade7953.h"
 
 #define MGOS_ADE7953_I2C_ADDR 0x38
 
@@ -57,10 +57,28 @@
 #define MGOS_ADE7953_REG_EX_REF 0x800
 
 struct mgos_ade7953 {
+#if MGOS_ADE7953_ENABLE_I2C
   struct mgos_i2c *i2c;
+#endif
+#if  MGOS_ADE7953_ENABLE_SPI
+  struct mgos_spi *spi;
+  int spi_cs;
+#endif
 
   float voltage_scale;
   float current_scale[2];
   float apower_scale[2];
   float aenergy_scale[2];
 };
+
+bool mgos_ade7953_create_common(struct mgos_ade7953 *dev, const struct mgos_ade7953_config *cfg);
+
+#if MGOS_ADE7953_ENABLE_I2C
+bool mgos_ade7953_write_reg_i2c(struct mgos_ade7953 *dev, uint16_t reg, int size, int32_t val);
+bool mgos_ade7953_read_reg_i2c(struct mgos_ade7953 *dev, uint16_t reg, int size, uint8_t *val);
+#endif
+
+#if  MGOS_ADE7953_ENABLE_SPI
+bool mgos_ade7953_write_reg_spi(struct mgos_ade7953 *dev, uint16_t reg, int size, int32_t val);
+bool mgos_ade7953_read_reg_spi(struct mgos_ade7953 *dev, uint16_t reg, int size, uint8_t *val);
+#endif
