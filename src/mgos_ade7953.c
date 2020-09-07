@@ -40,7 +40,7 @@ bool mgos_ade7953_write_reg(struct mgos_ade7953 *dev, uint16_t reg, int32_t val)
 #if MGOS_ADE7953_ENABLE_SPI
   if (dev->spi) return mgos_ade7953_write_reg_spi(dev, reg, size, val);
 #endif
-    return false;
+  return false;
 }
 
 bool mgos_ade7953_read_reg(struct mgos_ade7953 *dev, uint16_t reg, bool is_signed, int32_t *val) {
@@ -55,6 +55,7 @@ bool mgos_ade7953_read_reg(struct mgos_ade7953 *dev, uint16_t reg, bool is_signe
     if (dev->i2c) {
       if (mgos_ade7953_read_reg_i2c(dev, reg, size, &data[0])) break;
       return false;
+    }
 #endif
 #if MGOS_ADE7953_ENABLE_SPI
     if (dev->spi) {
