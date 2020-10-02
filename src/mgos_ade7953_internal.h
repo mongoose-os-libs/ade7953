@@ -53,14 +53,20 @@
 #define MGOS_ADE7953_REG_ANENERGYA 0x31E
 #define MGOS_ADE7953_REG_ANENERGYB 0x31F
 
+#define MGOS_ADE7953_REG_IRQSTATA 0x32D
+#define MGOS_ADE7953_REG_IRQSTATA_RESET (1 << 20)
+
 #define MGOS_ADE7953_REG_VERSION 0x702
 #define MGOS_ADE7953_REG_EX_REF 0x800
+
+#define MGOS_ADE7953_REG_CONFIG_HPFEN (1 << 2)
+#define MGOS_ADE7953_REG_CONFIG_SWRST (1 << 7)
 
 struct mgos_ade7953 {
 #if MGOS_ADE7953_ENABLE_I2C
   struct mgos_i2c *i2c;
 #endif
-#if  MGOS_ADE7953_ENABLE_SPI
+#if MGOS_ADE7953_ENABLE_SPI
   struct mgos_spi *spi;
   int spi_cs;
 #endif
@@ -78,7 +84,7 @@ bool mgos_ade7953_write_reg_i2c(struct mgos_ade7953 *dev, uint16_t reg, int size
 bool mgos_ade7953_read_reg_i2c(struct mgos_ade7953 *dev, uint16_t reg, int size, uint8_t *val);
 #endif
 
-#if  MGOS_ADE7953_ENABLE_SPI
+#if MGOS_ADE7953_ENABLE_SPI
 bool mgos_ade7953_write_reg_spi(struct mgos_ade7953 *dev, uint16_t reg, int size, int32_t val);
 bool mgos_ade7953_read_reg_spi(struct mgos_ade7953 *dev, uint16_t reg, int size, uint8_t *val);
 #endif

@@ -16,8 +16,6 @@
 
 #include "mgos_ade7953.h"
 
-#include "mgos_i2c.h"
-
 #include "mgos_ade7953_internal.h"
 
 int mgos_ade7953_regsize(uint16_t reg) {
@@ -33,38 +31,38 @@ int mgos_ade7953_regsize(uint16_t reg) {
 bool mgos_ade7953_write_reg(struct mgos_ade7953 *dev, uint16_t reg, int32_t val) {
   int size = mgos_ade7953_regsize(reg);
   if (!dev || size > 4 || size < 0) return false;
-
+  bool res = false;
 #if MGOS_ADE7953_ENABLE_I2C
-  if (dev->i2c) return mgos_ade7953_write_reg_i2c(dev, reg, size, val);
+  if (dev->i2c) res = mgos_ade7953_write_reg_i2c(dev, reg, size, val);
 #endif
 #if MGOS_ADE7953_ENABLE_SPI
-  if (dev->spi) return mgos_ade7953_write_reg_spi(dev, reg, size, val);
+  if (dev->spi) res = mgos_ade7953_write_reg_spi(dev, reg, size, val);
 #endif
-  return false;
+  // CONFIG.SWRST write is expected to fail, device resets immediately and does not ack.
+  if (!res && !(reg == MGOS_ADE7953_REG_CONFIG && (val & MGOS_ADE7953_REG_CONFIG_SWRST))) {
+    LOG(LL_ERROR, ("ADE7953 reg write error (%#x)", reg));
+  }
+  return res;
 }
 
 bool mgos_ade7953_read_reg(struct mgos_ade7953 *dev, uint16_t reg, bool is_signed, int32_t *val) {
   int32_t v = 0;
   uint8_t data[4];
   int size = mgos_ade7953_regsize(reg);
+  bool res = false;
 
   if (!dev || size > 4 || size < 0) return false;
 
-  do {
 #if MGOS_ADE7953_ENABLE_I2C
-    if (dev->i2c) {
-      if (mgos_ade7953_read_reg_i2c(dev, reg, size, &data[0])) break;
-      return false;
-    }
+  if (dev->i2c) res = mgos_ade7953_read_reg_i2c(dev, reg, size, &data[0]);
 #endif
 #if MGOS_ADE7953_ENABLE_SPI
-    if (dev->spi) {
-      if (mgos_ade7953_read_reg_spi(dev, reg, size, &data[0])) break;
-      return false;
-    }
+  if (dev->spi) res = mgos_ade7953_read_reg_spi(dev, reg, size, &data[0]);
 #endif
+  if (!res) {
+    LOG(LL_ERROR, ("ADE7953 reg read error (%#x)", reg));
     return false;
-  } while (false);
+  }
 
   for (int i = 0; i < size; i++) {
     v = (v << 8) | data[i];
@@ -97,8 +95,13 @@ bool mgos_ade7953_create_common(struct mgos_ade7953 *dev, const struct mgos_ade7
   if (mgos_ade7953_read_reg(dev, MGOS_ADE7953_REG_VERSION, false, &version)) {
     LOG(LL_INFO, ("ADE7953 silicon version: 0x%02x (%d)", (int) version, (int) version));
 
-    // Lock comms interface, enable high pass filter
-    mgos_ade7953_write_reg(dev, MGOS_ADE7953_REG_CONFIG, 0x04);
+    // Perform software reset.
+    mgos_ade7953_write_reg(dev, MGOS_ADE7953_REG_CONFIG, MGOS_ADE7953_REG_CONFIG_SWRST);
+    mgos_msleep(10);
+    int32_t val = 0;
+    do {
+      mgos_msleep(10);
+    } while (!mgos_ade7953_read_reg(dev, MGOS_ADE7953_REG_IRQSTATA, false, &val) || !(val & MGOS_ADE7953_REG_IRQSTATA_RESET));
 
     // Unlock unnamed (!) register 0x120 (see datasheet, page 18)
     mgos_ade7953_write_reg(dev, MGOS_ADE7953_REG_UNNAMED, 0xAD);
