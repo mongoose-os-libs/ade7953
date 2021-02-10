@@ -32,7 +32,7 @@ bool mgos_ade7953_write_reg_spi(struct mgos_ade7953 *dev, uint16_t reg, int size
   struct mgos_spi_txn txn = {
       .cs = dev->spi_cs,
       .mode = 3,
-      .freq = 1e6,
+      .freq = MGOS_ADE7953_SPI_FREQ,
       .hd =
           {
               .tx_data = data_out,
@@ -61,7 +61,7 @@ bool mgos_ade7953_read_reg_spi(struct mgos_ade7953 *dev, uint16_t reg, int size,
   struct mgos_spi_txn txn = {
       .cs = dev->spi_cs,
       .mode = 3,
-      .freq = 1e6,
+      .freq = MGOS_ADE7953_SPI_FREQ,
       .hd =
           {
               .tx_data = data_out,

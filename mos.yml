@@ -16,6 +16,8 @@ conds:
         - src/mgos_ade7953_spi.c
       libs:
         - location: https://github.com/mongoose-os-libs/spi
+      cdefs:
+        MGOS_ADE7953_SPI_FREQ: 1000000
 
   - when: cdefs.MGOS_ADE7953_ENABLE_I2C == "1"
     apply:
