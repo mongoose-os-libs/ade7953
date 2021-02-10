@@ -55,6 +55,8 @@ enum mgos_app_init_result mgos_app_init(void) {
       .current_offset = {-0.017, -0.017},
       .apower_scale = {(1 / 164.0), (1 / 164.0)},
       .aenergy_scale = {(1 / 25240.0), (1 / 25240.0)},
+      .voltage_pga_gain = MGOS_ADE7953_PGA_GAIN_1,
+      .current_pga_gain = {MGOS_ADE7953_PGA_GAIN_8, MGOS_ADE7953_PGA_GAIN_8},
   };
   if (!(ade = mgos_ade7953_create(mgos_i2c_get_global(), &ade_cfg))) {
     return false;

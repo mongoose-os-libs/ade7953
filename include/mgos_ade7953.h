@@ -26,6 +26,15 @@ extern "C" {
 
 struct mgos_ade7953;
 
+enum ade7953_pga_gain {
+  MGOS_ADE7953_PGA_GAIN_1 = 0x00,
+  MGOS_ADE7953_PGA_GAIN_2 = 0x01,
+  MGOS_ADE7953_PGA_GAIN_4 = 0x02,
+  MGOS_ADE7953_PGA_GAIN_8 = 0x03,
+  MGOS_ADE7953_PGA_GAIN_16 = 0x04,
+  MGOS_ADE7953_PGA_GAIN_22 = 0x05
+};
+
 struct mgos_ade7953_config {
   // Scaling factor to convert voltage channel ADC readings to voltage.
   // It depends on the parameters of the voltage divider used on the input.
@@ -44,6 +53,10 @@ struct mgos_ade7953_config {
 
   // Scaling factors to convert active energy to watt-hours.
   float aenergy_scale[2];
+
+  // PGA selectable gains. Default is 0 (MGOS_ADE7953_PGA_GAIN_1).
+  enum ade7953_pga_gain voltage_pga_gain;
+  enum ade7953_pga_gain current_pga_gain[2];
 };
 
 #if MGOS_ADE7953_ENABLE_I2C

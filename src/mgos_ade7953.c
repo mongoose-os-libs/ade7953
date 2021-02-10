@@ -120,6 +120,17 @@ bool mgos_ade7953_create_common(struct mgos_ade7953 *dev, const struct mgos_ade7
       mgos_ade7953_write_reg(dev, MGOS_ADE7953_REG_BIRMSOS, (int32_t)(cfg->current_offset[1] / cfg->current_scale[1]));
     }
 
+    // Set PGA gains.
+    if (cfg->voltage_pga_gain != 0) {
+      mgos_ade7953_write_reg(dev, MGOS_ADE7953_REG_PGA_V, cfg->voltage_pga_gain);
+    }
+    if (cfg->current_pga_gain[0] != 0) {
+      mgos_ade7953_write_reg(dev, MGOS_ADE7953_REG_PGA_IA, cfg->current_pga_gain[0]);
+    }
+    if (cfg->current_pga_gain[1] != 0) {
+      mgos_ade7953_write_reg(dev, MGOS_ADE7953_REG_PGA_IB, cfg->current_pga_gain[1]);
+    }
+
     mgos_ade7953_write_reg(dev, MGOS_ADE7953_REG_LCYCMODE, 0x40);
 
   } else {
