@@ -26,6 +26,23 @@ conds:
       libs:
         - location: https://github.com/mongoose-os-libs/i2c
 
+config_schema:
+  # Abstract data, saved in separate storage
+  - ["ade7953", "o", {title: "ADE7953 driver configuration", abstract: true}]
+  - ["ade7953.voltage_scale", "f", {title: "Scaling factor to convert voltage channel ADC readings to voltage"}]
+  - ["ade7953.voltage_offset", "f", {title: "Voltage measurement offset, volts"}]
+  - ["ade7953.current_scale_0", "f", {title: "Scaling factor to convert current channel ADC readings to amperes, channel 0"}]
+  - ["ade7953.current_scale_1", "f", {title: "Scaling factor to convert current channel ADC readings to amperes, channel 1"}]
+  - ["ade7953.current_offset_0", "f", {title: "Current measurement offsets, in amps, channel 0"}]
+  - ["ade7953.current_offset_1", "f", {title: "Current measurement offsets, in amps, channel 1"}]
+  - ["ade7953.apower_scale_0", "f", {title: "Scaling factor to convert active power to watts, channel 0"}]
+  - ["ade7953.apower_scale_1", "f", {title: "Scaling factor to convert active power to watts, channel 1"}]
+  - ["ade7953.aenergy_scale_0", "f", {title: "Scaling factor to convert active energy to watt-hours, channel 0"}]
+  - ["ade7953.aenergy_scale_1", "f", {title: "Scaling factor to convert active energy to watt-hours, channel 1"}]
+  - ["ade7953.voltage_pga_gain", "i", {title: "Voltage PGA gain, see enum ade7953_pga_gain in mgos_ade7953.h"}]
+  - ["ade7953.current_pga_gain_0", "i", {title: "Current PGA gain, channel 0, see enum ade7953_pga_gain in mgos_ade7953.h"}]
+  - ["ade7953.current_pga_gain_1", "i", {title: "Current PGA gain, channel 1, see enum ade7953_pga_gain in mgos_ade7953.h"}]
+
 cdefs:
   MGOS_ADE7953_ENABLE_SPI: 0
   MGOS_ADE7953_ENABLE_I2C: 1

@@ -79,7 +79,7 @@ struct mgos_ade7953 {
   float aenergy_scale[2];
 };
 
-bool mgos_ade7953_create_common(struct mgos_ade7953 *dev, const struct mgos_ade7953_config *cfg);
+bool mgos_ade7953_create_common(struct mgos_ade7953 *dev, const struct mgos_config_ade7953 *cfg);
 
 #if MGOS_ADE7953_ENABLE_I2C
 bool mgos_ade7953_write_reg_i2c(struct mgos_ade7953 *dev, uint16_t reg, int size, int32_t val);

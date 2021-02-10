@@ -35,41 +35,17 @@ enum ade7953_pga_gain {
   MGOS_ADE7953_PGA_GAIN_22 = 0x05
 };
 
-struct mgos_ade7953_config {
-  // Scaling factor to convert voltage channel ADC readings to voltage.
-  // It depends on the parameters of the voltage divider used on the input.
-  float voltage_scale;
-  // Voltage measurement offset, volts.
-  float voltage_offset;
-
-  // Scaling factoris to convert current channel ADC readings to amperes.
-  // Depends on the shunt parameters.
-  float current_scale[2];
-  // Current measurement offsets, in amps.
-  float current_offset[2];
-
-  // Scaling factors to convert active power to watts.
-  float apower_scale[2];
-
-  // Scaling factors to convert active energy to watt-hours.
-  float aenergy_scale[2];
-
-  // PGA selectable gains. Default is 0 (MGOS_ADE7953_PGA_GAIN_1).
-  enum ade7953_pga_gain voltage_pga_gain;
-  enum ade7953_pga_gain current_pga_gain[2];
-};
-
 #if MGOS_ADE7953_ENABLE_I2C
 // Create an instance of the driver at the given I2C bus and address.
 // Returns a pointer to the object upon success, NULL otherwise.
 #include "mgos_i2c.h"
-struct mgos_ade7953 *mgos_ade7953_create_i2c(struct mgos_i2c *i2c, const struct mgos_ade7953_config *cfg);
+struct mgos_ade7953 *mgos_ade7953_create_i2c(struct mgos_i2c *i2c, const struct mgos_config_ade7953 *cfg);
 #define mgos_ade7953_create mgos_ade7953_create_i2c
 #endif
 
 #if MGOS_ADE7953_ENABLE_SPI
 #include "mgos_spi.h"
-struct mgos_ade7953 *mgos_ade7953_create_spi(struct mgos_spi *spi, int cs, const struct mgos_ade7953_config *cfg);
+struct mgos_ade7953 *mgos_ade7953_create_spi(struct mgos_spi *spi, int cs, const struct mgos_config_ade7953 *cfg);
 #endif
 
 // Write the detected voltage in Volts RMS in the *volts pointer.

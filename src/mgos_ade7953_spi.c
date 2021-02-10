@@ -1,7 +1,7 @@
 #include "mgos_ade7953_internal.h"
 #include "mgos_spi.h"
 
-struct mgos_ade7953 *mgos_ade7953_create_spi(struct mgos_spi *spi, int cs, const struct mgos_ade7953_config *cfg) {
+struct mgos_ade7953 *mgos_ade7953_create_spi(struct mgos_spi *spi, int cs, const struct mgos_config_ade7953 *cfg) {
   struct mgos_ade7953 *dev = NULL;
 
   if (!spi) return NULL;
