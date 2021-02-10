@@ -226,6 +226,26 @@ bool mgos_ade7953_get_aenergy(struct mgos_ade7953 *dev, int channel, bool reset,
   return true;
 }
 
+bool mgos_ade7953_get_pf(struct mgos_ade7953 *dev, int channel, float *pf) {
+  uint16_t reg;
+  int32_t val;
+  if (!dev || !pf) return false;
+  if (channel == 0)
+    reg = MGOS_ADE7953_REG_PFA;
+  else if (channel == 1)
+    reg = MGOS_ADE7953_REG_PFB;
+  else
+    return false;
+  if (!mgos_ade7953_read_reg(dev, reg, true, &val)) {
+    return false;
+  }
+  val &= 0x0000FFFF;
+  // bit 16 of val determines the sign, bits [0:15] represent the absolute part
+  // 2^-15 = 0.000030518
+  *pf = (val & 0x8000) ? /*negative sign*/ -((val & ~0x8000) * 0.000030518) : /*positive sign*/ (val * 0.000030518);
+  return true;
+}
+
 bool mgos_ade7953_destroy(struct mgos_ade7953 **dev) {
   if (!*dev) return false;
   free(*dev);

@@ -92,6 +92,11 @@ bool mgos_ade7953_get_apower(struct mgos_ade7953 *dev, int channel, float *watts
 // If reset is true, resets the accumulator.
 bool mgos_ade7953_get_aenergy(struct mgos_ade7953 *dev, int channel, bool reset, float *wh);
 
+// Write the measured power factor to the *pf pointer.
+// Power factor is a dimensionless number in the closed interval of −1 to 1.
+// Returns true on success, false otherwise.
+bool mgos_ade7953_get_pf(struct mgos_ade7953 *dev, int channel, float *pf);
+
 // Advanced usage: functions to read/write ADE7953 registers.
 bool mgos_ade7953_read_reg(struct mgos_ade7953 *dev, uint16_t reg, bool is_signed, int32_t *val);
 bool mgos_ade7953_write_reg(struct mgos_ade7953 *dev, uint16_t reg, int32_t val);
