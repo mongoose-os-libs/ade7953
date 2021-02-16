@@ -48,13 +48,20 @@ enum mgos_app_init_result mgos_app_init(void) {
   struct mgos_ade7953 *ade;
 
   // These constants are specific to the specific application circuit.
-  const struct mgos_ade7953_config ade_cfg = {
+  const struct mgos_config_ade7953 ade_cfg = {
       .voltage_scale = .0000382602,
       .voltage_offset = -0.068,
-      .current_scale = {0.00000949523, 0.00000949523},
-      .current_offset = {-0.017, -0.017},
-      .apower_scale = {(1 / 164.0), (1 / 164.0)},
-      .aenergy_scale = {(1 / 25240.0), (1 / 25240.0)},
+      .current_scale_0 = 0.00000949523,
+      .current_scale_1 = 0.00000949523,
+      .current_offset_0 = -0.017,
+      .current_offset_1 = -0.017,
+      .apower_scale_0 = (1 / 164.0),
+      .apower_scale_1 = (1 / 164.0),
+      .aenergy_scale_0 = (1 / 25240.0),
+      .aenergy_scale_1 = (1 / 25240.0),
+      .voltage_pga_gain = MGOS_ADE7953_PGA_GAIN_1,
+      .current_pga_gain_0 = MGOS_ADE7953_PGA_GAIN_8,
+      .current_pga_gain_1 = MGOS_ADE7953_PGA_GAIN_8,
   };
   if (!(ade = mgos_ade7953_create(mgos_i2c_get_global(), &ade_cfg))) {
     return false;

@@ -82,15 +82,16 @@ bool mgos_ade7953_read_reg(struct mgos_ade7953 *dev, uint16_t reg, bool is_signe
   return true;
 }
 
-bool mgos_ade7953_create_common(struct mgos_ade7953 *dev, const struct mgos_ade7953_config *cfg) {
+bool mgos_ade7953_create_common(struct mgos_ade7953 *dev, const struct mgos_config_ade7953 *cfg) {
   int32_t version;
 
   dev->voltage_scale = cfg->voltage_scale;
-  for (int i = 0; i < 2; i++) {
-    dev->current_scale[i] = cfg->current_scale[i];
-    dev->apower_scale[i] = cfg->apower_scale[i];
-    dev->aenergy_scale[i] = cfg->aenergy_scale[i];
-  }
+  dev->current_scale[0] = cfg->current_scale_0;
+  dev->apower_scale[0] = cfg->apower_scale_0;
+  dev->aenergy_scale[0] = cfg->aenergy_scale_0;
+  dev->current_scale[1] = cfg->current_scale_0;
+  dev->apower_scale[1] = cfg->apower_scale_0;
+  dev->aenergy_scale[1] = cfg->aenergy_scale_0;
 
   if (mgos_ade7953_read_reg(dev, MGOS_ADE7953_REG_VERSION, false, &version)) {
     LOG(LL_INFO, ("ADE7953 silicon version: 0x%02x (%d)", (int) version, (int) version));
@@ -113,11 +114,22 @@ bool mgos_ade7953_create_common(struct mgos_ade7953 *dev, const struct mgos_ade7
     if (cfg->voltage_offset != 0) {
       mgos_ade7953_write_reg(dev, MGOS_ADE7953_REG_VRMSOS, (int32_t)(cfg->voltage_offset / cfg->voltage_scale));
     }
-    if (cfg->current_offset[0] != 0) {
-      mgos_ade7953_write_reg(dev, MGOS_ADE7953_REG_AIRMSOS, (int32_t)(cfg->current_offset[0] / cfg->current_scale[0]));
+    if (cfg->current_offset_0 != 0) {
+      mgos_ade7953_write_reg(dev, MGOS_ADE7953_REG_AIRMSOS, (int32_t)(cfg->current_offset_0 / cfg->current_scale_0));
     }
-    if (cfg->current_offset[1] != 0) {
-      mgos_ade7953_write_reg(dev, MGOS_ADE7953_REG_BIRMSOS, (int32_t)(cfg->current_offset[1] / cfg->current_scale[1]));
+    if (cfg->current_offset_1 != 0) {
+      mgos_ade7953_write_reg(dev, MGOS_ADE7953_REG_BIRMSOS, (int32_t)(cfg->current_offset_1 / cfg->current_scale_1));
+    }
+
+    // Set PGA gains.
+    if (cfg->voltage_pga_gain != 0) {
+      mgos_ade7953_write_reg(dev, MGOS_ADE7953_REG_PGA_V, cfg->voltage_pga_gain);
+    }
+    if (cfg->current_pga_gain_0 != 0) {
+      mgos_ade7953_write_reg(dev, MGOS_ADE7953_REG_PGA_IA, cfg->current_pga_gain_0);
+    }
+    if (cfg->current_pga_gain_1 != 0) {
+      mgos_ade7953_write_reg(dev, MGOS_ADE7953_REG_PGA_IB, cfg->current_pga_gain_1);
     }
 
     mgos_ade7953_write_reg(dev, MGOS_ADE7953_REG_LCYCMODE, 0x40);
@@ -212,6 +224,26 @@ bool mgos_ade7953_get_aenergy(struct mgos_ade7953 *dev, int channel, bool reset,
     return false;
   }
   *wh = val * dev->aenergy_scale[channel];
+  return true;
+}
+
+bool mgos_ade7953_get_pf(struct mgos_ade7953 *dev, int channel, float *pf) {
+  uint16_t reg;
+  int32_t val;
+  if (!dev || !pf) return false;
+  if (channel == 0)
+    reg = MGOS_ADE7953_REG_PFA;
+  else if (channel == 1)
+    reg = MGOS_ADE7953_REG_PFB;
+  else
+    return false;
+  if (!mgos_ade7953_read_reg(dev, reg, true, &val)) {
+    return false;
+  }
+  val &= 0x0000FFFF;
+  // bit 16 of val determines the sign, bits [0:15] represent the absolute part
+  // 2^-15 = 0.000030518
+  *pf = (val & 0x8000) ? /*negative sign*/ -((val & ~0x8000) * 0.000030518) : /*positive sign*/ (val * 0.000030518);
   return true;
 }
 

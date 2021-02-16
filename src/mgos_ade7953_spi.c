@@ -1,7 +1,7 @@
 #include "mgos_ade7953_internal.h"
 #include "mgos_spi.h"
 
-struct mgos_ade7953 *mgos_ade7953_create_spi(struct mgos_spi *spi, int cs, const struct mgos_ade7953_config *cfg) {
+struct mgos_ade7953 *mgos_ade7953_create_spi(struct mgos_spi *spi, int cs, const struct mgos_config_ade7953 *cfg) {
   struct mgos_ade7953 *dev = NULL;
 
   if (!spi) return NULL;
@@ -31,8 +31,8 @@ bool mgos_ade7953_write_reg_spi(struct mgos_ade7953 *dev, uint16_t reg, int size
 
   struct mgos_spi_txn txn = {
       .cs = dev->spi_cs,
-      .mode = 3,
-      .freq = 1e6,
+      .mode = 0,
+      .freq = MGOS_ADE7953_SPI_FREQ,
       .hd =
           {
               .tx_data = data_out,
@@ -60,8 +60,8 @@ bool mgos_ade7953_read_reg_spi(struct mgos_ade7953 *dev, uint16_t reg, int size,
 
   struct mgos_spi_txn txn = {
       .cs = dev->spi_cs,
-      .mode = 3,
-      .freq = 1e6,
+      .mode = 0,
+      .freq = MGOS_ADE7953_SPI_FREQ,
       .hd =
           {
               .tx_data = data_out,

@@ -52,6 +52,8 @@
 #define MGOS_ADE7953_REG_V 0x31C
 #define MGOS_ADE7953_REG_ANENERGYA 0x31E
 #define MGOS_ADE7953_REG_ANENERGYB 0x31F
+#define MGOS_ADE7953_REG_PFA 0x10A
+#define MGOS_ADE7953_REG_PFB 0x10B
 
 #define MGOS_ADE7953_REG_IRQSTATA 0x32D
 #define MGOS_ADE7953_REG_IRQSTATA_RESET (1 << 20)
@@ -77,7 +79,7 @@ struct mgos_ade7953 {
   float aenergy_scale[2];
 };
 
-bool mgos_ade7953_create_common(struct mgos_ade7953 *dev, const struct mgos_ade7953_config *cfg);
+bool mgos_ade7953_create_common(struct mgos_ade7953 *dev, const struct mgos_config_ade7953 *cfg);
 
 #if MGOS_ADE7953_ENABLE_I2C
 bool mgos_ade7953_write_reg_i2c(struct mgos_ade7953 *dev, uint16_t reg, int size, int32_t val);

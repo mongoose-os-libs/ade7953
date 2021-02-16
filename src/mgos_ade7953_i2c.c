@@ -1,7 +1,7 @@
 #include "mgos_ade7953_internal.h"
 #include "mgos_i2c.h"
 
-struct mgos_ade7953 *mgos_ade7953_create_i2c(struct mgos_i2c *i2c, const struct mgos_ade7953_config *cfg) {
+struct mgos_ade7953 *mgos_ade7953_create_i2c(struct mgos_i2c *i2c, const struct mgos_config_ade7953 *cfg) {
   struct mgos_ade7953 *dev = NULL;
 
   if (!i2c) return NULL;
