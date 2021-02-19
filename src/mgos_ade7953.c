@@ -47,7 +47,7 @@ bool mgos_ade7953_write_reg(struct mgos_ade7953 *dev, uint16_t reg, int32_t val)
 
 bool mgos_ade7953_read_reg(struct mgos_ade7953 *dev, uint16_t reg, bool is_signed, int32_t *val) {
   int32_t v = 0;
-  uint8_t data[4];
+  uint8_t data[4] = {0};
   int size = mgos_ade7953_regsize(reg);
   bool res = false;
 
@@ -72,6 +72,7 @@ bool mgos_ade7953_read_reg(struct mgos_ade7953 *dev, uint16_t reg, bool is_signe
     if (size == 1) sign_mask = (1 << 7);
     if (size == 2) sign_mask = (1 << 15);
     if (size == 3) sign_mask = (1 << 23);
+    if (size == 4) sign_mask = (1 << 31);
     if ((v & sign_mask) != 0) {
       v &= ~sign_mask;
       v |= (1 << 31);
