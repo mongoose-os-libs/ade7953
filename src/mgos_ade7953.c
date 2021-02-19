@@ -104,6 +104,9 @@ bool mgos_ade7953_create_common(struct mgos_ade7953 *dev, const struct mgos_conf
       mgos_msleep(10);
     } while (!mgos_ade7953_read_reg(dev, MGOS_ADE7953_REG_IRQSTATA, false, &val) || !(val & MGOS_ADE7953_REG_IRQSTATA_RESET));
 
+    // Lock comms interface, enable high pass filter
+    mgos_ade7953_write_reg(dev, MGOS_ADE7953_REG_CONFIG, 0x04);
+
     // Unlock unnamed (!) register 0x120 (see datasheet, page 18)
     mgos_ade7953_write_reg(dev, MGOS_ADE7953_REG_UNNAMED, 0xAD);
 
