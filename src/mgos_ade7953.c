@@ -89,9 +89,9 @@ bool mgos_ade7953_create_common(struct mgos_ade7953 *dev, const struct mgos_conf
   dev->current_scale[0] = cfg->current_scale_0;
   dev->apower_scale[0] = cfg->apower_scale_0;
   dev->aenergy_scale[0] = cfg->aenergy_scale_0;
-  dev->current_scale[1] = cfg->current_scale_0;
-  dev->apower_scale[1] = cfg->apower_scale_0;
-  dev->aenergy_scale[1] = cfg->aenergy_scale_0;
+  dev->current_scale[1] = cfg->current_scale_1;
+  dev->apower_scale[1] = cfg->apower_scale_1;
+  dev->aenergy_scale[1] = cfg->aenergy_scale_1;
 
   if (mgos_ade7953_read_reg(dev, MGOS_ADE7953_REG_VERSION, false, &version)) {
     LOG(LL_INFO, ("ADE7953 silicon version: 0x%02x (%d)", (int) version, (int) version));
