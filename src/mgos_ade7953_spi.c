@@ -7,6 +7,7 @@ struct mgos_ade7953 *mgos_ade7953_create_spi(struct mgos_spi *spi, int cs, const
   if (!spi) return NULL;
   if (!(dev = calloc(1, sizeof(*dev)))) return NULL;
   dev->spi = spi;
+  dev->spi_cs = cs;
 
   if (mgos_ade7953_create_common(dev, cfg)) {
     return dev;
