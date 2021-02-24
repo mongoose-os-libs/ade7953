@@ -7,6 +7,7 @@ struct mgos_ade7953 *mgos_ade7953_create_spi(struct mgos_spi *spi, int cs, const
   if (!spi) return NULL;
   if (!(dev = calloc(1, sizeof(*dev)))) return NULL;
   dev->spi = spi;
+  dev->spi_cs = cs;
 
   if (mgos_ade7953_create_common(dev, cfg)) {
     return dev;
@@ -15,8 +16,7 @@ struct mgos_ade7953 *mgos_ade7953_create_spi(struct mgos_spi *spi, int cs, const
 }
 
 bool mgos_ade7953_write_reg_spi(struct mgos_ade7953 *dev, uint16_t reg, int size, int32_t val) {
-  uint8_t data_out[7];
-  int i;
+  uint8_t data_out[7] = {0};
 
   if (!dev || size > 4 || size < 0) return false;
 
@@ -24,9 +24,9 @@ bool mgos_ade7953_write_reg_spi(struct mgos_ade7953 *dev, uint16_t reg, int size
   data_out[1] = reg & 0xff;
   data_out[2] = 0x00;
 
-  i = 3;
-  while (size--) {
-    data_out[i++] = (val >> (8 * size)) & 0xff;
+  for (int i = 0; i < size; i++) {
+    int shift = size - (i + 1);
+    data_out[i + 3] = (val >> (8 * shift)) & 0xff;
   }
 
   struct mgos_spi_txn txn = {
@@ -36,7 +36,7 @@ bool mgos_ade7953_write_reg_spi(struct mgos_ade7953 *dev, uint16_t reg, int size
       .hd =
           {
               .tx_data = data_out,
-              .tx_len = 7,
+              .tx_len = 3 + size,
               .dummy_len = 0,
               .rx_data = NULL,
               .rx_len = 0,

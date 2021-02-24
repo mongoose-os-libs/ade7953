@@ -47,7 +47,7 @@ bool mgos_ade7953_write_reg(struct mgos_ade7953 *dev, uint16_t reg, int32_t val)
 
 bool mgos_ade7953_read_reg(struct mgos_ade7953 *dev, uint16_t reg, bool is_signed, int32_t *val) {
   int32_t v = 0;
-  uint8_t data[4];
+  uint8_t data[4] = {0};
   int size = mgos_ade7953_regsize(reg);
   bool res = false;
 
@@ -72,6 +72,7 @@ bool mgos_ade7953_read_reg(struct mgos_ade7953 *dev, uint16_t reg, bool is_signe
     if (size == 1) sign_mask = (1 << 7);
     if (size == 2) sign_mask = (1 << 15);
     if (size == 3) sign_mask = (1 << 23);
+    if (size == 4) sign_mask = (1 << 31);
     if ((v & sign_mask) != 0) {
       v &= ~sign_mask;
       v |= (1 << 31);
@@ -89,9 +90,9 @@ bool mgos_ade7953_create_common(struct mgos_ade7953 *dev, const struct mgos_conf
   dev->current_scale[0] = cfg->current_scale_0;
   dev->apower_scale[0] = cfg->apower_scale_0;
   dev->aenergy_scale[0] = cfg->aenergy_scale_0;
-  dev->current_scale[1] = cfg->current_scale_0;
-  dev->apower_scale[1] = cfg->apower_scale_0;
-  dev->aenergy_scale[1] = cfg->aenergy_scale_0;
+  dev->current_scale[1] = cfg->current_scale_1;
+  dev->apower_scale[1] = cfg->apower_scale_1;
+  dev->aenergy_scale[1] = cfg->aenergy_scale_1;
 
   if (mgos_ade7953_read_reg(dev, MGOS_ADE7953_REG_VERSION, false, &version)) {
     LOG(LL_INFO, ("ADE7953 silicon version: 0x%02x (%d)", (int) version, (int) version));
@@ -103,6 +104,9 @@ bool mgos_ade7953_create_common(struct mgos_ade7953 *dev, const struct mgos_conf
     do {
       mgos_msleep(10);
     } while (!mgos_ade7953_read_reg(dev, MGOS_ADE7953_REG_IRQSTATA, false, &val) || !(val & MGOS_ADE7953_REG_IRQSTATA_RESET));
+
+    // Lock comms interface, enable high pass filter
+    mgos_ade7953_write_reg(dev, MGOS_ADE7953_REG_CONFIG, 0x04);
 
     // Unlock unnamed (!) register 0x120 (see datasheet, page 18)
     mgos_ade7953_write_reg(dev, MGOS_ADE7953_REG_UNNAMED, 0xAD);
@@ -240,10 +244,9 @@ bool mgos_ade7953_get_pf(struct mgos_ade7953 *dev, int channel, float *pf) {
   if (!mgos_ade7953_read_reg(dev, reg, true, &val)) {
     return false;
   }
-  val &= 0x0000FFFF;
-  // bit 16 of val determines the sign, bits [0:15] represent the absolute part
+  // bit 31 of val determines the sign, bits [0:30] represent the absolute part
   // 2^-15 = 0.000030518
-  *pf = (val & 0x8000) ? /*negative sign*/ -((val & ~0x8000) * 0.000030518) : /*positive sign*/ (val * 0.000030518);
+  *pf = (val & (1 << 31)) ? /*negative sign*/ -((val & ~(1 << 31)) * 0.000030518) : /*positive sign*/ (val * 0.000030518);
   return true;
 }
 
