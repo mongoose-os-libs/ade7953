@@ -241,12 +241,11 @@ bool mgos_ade7953_get_pf(struct mgos_ade7953 *dev, int channel, float *pf) {
     reg = MGOS_ADE7953_REG_PFB;
   else
     return false;
-  if (!mgos_ade7953_read_reg(dev, reg, true, &val)) {
+  if (!mgos_ade7953_read_reg(dev, reg, false, &val)) {
     return false;
   }
-  // bit 31 of val determines the sign, bits [0:30] represent the absolute part
-  // 2^-15 = 0.000030518
-  *pf = (val & (1 << 31)) ? /*negative sign*/ -((val & ~(1 << 31)) * 0.000030518) : /*positive sign*/ (val * 0.000030518);
+  // bit 15 is indicationg the sign and is part of the calculation
+  *pf = (val & (1 << 15)) ? /*negative sign*/ -(32767.0 / val) : /*positive sign*/ (val * 0.000030518);
   return true;
 }
 
